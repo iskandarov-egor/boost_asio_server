@@ -24,19 +24,26 @@ void test_handler(shared_ptr<tcp::socket> socket) {
     cout << "handler handling!" << endl;
 }
 
+#include <boost/algorithm/string.hpp>
+
 bool extract_uri(string &line, string &dest) {
     string LEFT { "GET " };
-    string RIGHT { " HTTP/1.0" };
+    string PROTOCOL { "HTTP/1.0" };
     try {
         if(line.compare(0, LEFT.length(), LEFT) != 0) {
             return false;
         }
-        // todo find instead cause \r\n
-        int right_pos = line.find(RIGHT.data(), 0, RIGHT.length());
-        if(line.compare(right_pos, RIGHT.length(), RIGHT) != 0) {
+
+
+        int protocol_pos = line.find(PROTOCOL.data(), 0, PROTOCOL.length());
+        int args_pos = line.find('?');
+        int right = (args_pos == string::npos) ? protocol_pos : args_pos;
+        if(line.compare(protocol_pos, PROTOCOL.length(), PROTOCOL) != 0) {
             return false;
         }
-        dest = line.substr(LEFT.length(), right_pos - LEFT.length());
+        dest = line.substr(LEFT.length(), right - LEFT.length());
+        boost::trim_right(dest);
+        boost::trim_left(dest);
     } catch(std::out_of_range) {
         return false;
     }
