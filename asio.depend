@@ -1,0 +1,67 @@
+# depslib dependency file v1.0
+1469107306 source:/home/name/projects/asio/acceptor_loop.cpp
+	<boost/bind.hpp>
+	<boost/asio.hpp>
+	"acceptor_loop.hpp"
+	<stdexcept>
+	"logger.h"
+
+1469102937 /home/name/projects/asio/acceptor_loop.hpp
+	<boost/asio.hpp>
+	<string>
+
+1469113773 /home/name/projects/asio/logger.h
+	<string>
+	<iostream>
+
+1469113026 source:/home/name/projects/asio/file_serving.cpp
+	<boost/asio.hpp>
+	<boost/asio/buffer.hpp>
+	<boost/bind.hpp>
+	"logger.h"
+	<fstream>
+	"file_serving.h"
+	<string>
+	<limits.h>
+	<stdlib.h>
+	<errno.h>
+	<stdexcept>
+	"config.h"
+
+1469101685 /home/name/projects/asio/file_serving.h
+	<boost/asio.hpp>
+	<string>
+
+1469107157 source:/home/name/projects/asio/logger.cpp
+	"logger.h"
+	<iostream>
+
+1469113560 source:/home/name/projects/asio/main.cpp
+	<ctime>
+	<iostream>
+	<string>
+	<boost/bind.hpp>
+	<boost/shared_ptr.hpp>
+	<boost/enable_shared_from_this.hpp>
+	<boost/asio.hpp>
+	<boost/asio/buffer.hpp>
+	"acceptor_loop.hpp"
+	"logger.h"
+	<fstream>
+	"file_serving.h"
+	"config.h"
+	<thread>
+	<cstdlib>
+	<stdlib.h>
+
+1469113737 source:/home/name/projects/asio/config.cpp
+	"config.h"
+	<stdexcept>
+	<cstdio>
+	<string>
+	<unistd.h>
+	<iostream>
+
+1469112894 /home/name/projects/asio/config.h
+	<string>
+
