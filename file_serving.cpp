@@ -32,6 +32,12 @@ typedef struct ClientData {
 
     ~ClientData() {
         print_log("clientdata", "destruct");
+        boost::system::error_code error_code;
+        socket->shutdown(tcp::socket::shutdown_both, error_code);
+        socket->close();
+        if(error_code) {
+            print_log("serve_chunk error while shutdown", error_code);
+        }
         delete[] buf;
     }
 } ClientData;
@@ -50,12 +56,7 @@ void serve_chunk(shared_ptr<ClientData> client_data) {
     } else {
         print_log("serve_uri", "no more chunks");
 
-        boost::system::error_code error_code;
-        client_data->socket->shutdown(tcp::socket::shutdown_both, error_code);
-        client_data->socket->close();
-        if(error_code) {
-            print_log("serve_chunk error while shutdown", error_code);
-        }
+
     }
 }
 
@@ -107,7 +108,7 @@ string PROTOCOL_STR = "HTTP/1.0";
 string DELIMITER = "\r\n";
 
 string STATUS_OK = "200 OK";
-string STATUS_NOT_FOUND = "404 NOT_FOUND";
+string STATUS_NOT_FOUND = "404 NOT FOUND";
 
 string make_headers(string status_code) {
     std::ostringstream stream;
@@ -118,7 +119,7 @@ string make_headers(string status_code) {
     return header;
 }
 
-string NOT_FOUND_HTML = "404.html";
+string NOT_FOUND_HTML = "/home/box/final/404.html";
 
 void serve_uri(shared_ptr<tcp::socket> socket, string uri) {
     string path;
