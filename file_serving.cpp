@@ -123,6 +123,7 @@ string NOT_FOUND_HTML = "/home/box/final/404.html";
 
 void serve_uri(shared_ptr<tcp::socket> socket, string uri) {
     string path;
+    string status = STATUS_OK;
     bool not_found = !real_path(config::DOCUMENT_ROOT + uri, path);
     ClientData *client_data;
     if(!not_found) {
@@ -137,6 +138,7 @@ void serve_uri(shared_ptr<tcp::socket> socket, string uri) {
 
     if(not_found) {
         client_data = new ClientData(socket, NOT_FOUND_HTML);
+        status = STATUS_NOT_FOUND;
         if(!client_data->is_file_ok()) {
             throw std::runtime_error("could not open not_found_html");
         }
