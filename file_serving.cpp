@@ -146,6 +146,6 @@ void serve_uri(shared_ptr<tcp::socket> socket, string uri) {
 
     shared_ptr<ClientData> client_data_sptr(client_data);
     print_log("serve_uri", "responding");
-    shared_ptr<string> headers {new string(make_headers(STATUS_OK))};
+    shared_ptr<string> headers {new string(make_headers(status))};
     serve_headers(client_data_sptr, headers);
 }
