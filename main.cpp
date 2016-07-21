@@ -24,8 +24,6 @@ void test_handler(shared_ptr<tcp::socket> socket) {
     cout << "handler handling!" << endl;
 }
 
-#include <boost/algorithm/string.hpp>
-
 bool extract_uri(string &line, string &dest) {
     string LEFT { "GET " };
     string PROTOCOL { "HTTP/1.0" };
@@ -42,8 +40,11 @@ bool extract_uri(string &line, string &dest) {
             return false;
         }
         dest = line.substr(LEFT.length(), right - LEFT.length());
-        boost::trim_right(dest);
-        boost::trim_left(dest);
+        // trim trailing spaces
+        size_t endpos = dest.find_last_not_of(" \t");
+        if( string::npos != endpos ) {
+            dest = dest.substr( 0, endpos+1 );
+        }
     } catch(std::out_of_range) {
         return false;
     }
