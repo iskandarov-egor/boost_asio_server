@@ -13,6 +13,7 @@ string PORT = "8989";
 string DOCUMENT_ROOT = "/home/name";
 string HOST = "0.0.0.0";
 
+int FILE_CHUNK_SIZE = 512;
 
 
 void parse_args(int argc, char **argv) {
@@ -38,6 +39,5 @@ void parse_args(int argc, char **argv) {
                 break;
             }
     }
-    cout << HOST << PORT << endl;
 }
 }

@@ -10,11 +10,11 @@
 	<boost/asio.hpp>
 	<string>
 
-1469113773 /home/name/projects/asio/logger.h
+1469884311 /home/name/projects/asio/logger.h
 	<string>
 	<iostream>
 
-1469121043 source:/home/name/projects/asio/file_serving.cpp
+1469828344 source:/home/name/projects/asio/file_serving.cpp
 	<boost/asio.hpp>
 	<boost/asio/buffer.hpp>
 	<boost/bind.hpp>
@@ -27,6 +27,10 @@
 	<errno.h>
 	<stdexcept>
 	"config.h"
+	<cstring>
+	<errno.h>
+	<stdlib.h>
+	<malloc.h>
 
 1469101685 /home/name/projects/asio/file_serving.h
 	<boost/asio.hpp>
@@ -36,7 +40,7 @@
 	"logger.h"
 	<iostream>
 
-1469119656 source:/home/name/projects/asio/main.cpp
+1469888093 source:/home/name/projects/asio/main.cpp
 	<ctime>
 	<iostream>
 	<string>
@@ -48,12 +52,14 @@
 	"acceptor_loop.hpp"
 	"logger.h"
 	<fstream>
-	"file_serving.h"
 	"config.h"
 	<unistd.h>
+	"http_request_parser.h"
+	"validation.h"
+	"file_sender_blocking.h"
 	<thread>
 
-1469113737 source:/home/name/projects/asio/config.cpp
+1469882149 source:/home/name/projects/asio/config.cpp
 	"config.h"
 	<stdexcept>
 	<cstdio>
@@ -61,6 +67,73 @@
 	<unistd.h>
 	<iostream>
 
-1469112894 /home/name/projects/asio/config.h
+1469884666 /home/name/projects/asio/config.h
 	<string>
+
+1469888235 source:/home/name/projects/asio/async_chunk_sender.cpp
+	<boost/asio.hpp>
+	<boost/asio/buffer.hpp>
+	<boost/bind.hpp>
+	"logger.h"
+	<fstream>
+	<string>
+	<limits.h>
+	<stdlib.h>
+	<errno.h>
+	<stdexcept>
+	"config.h"
+	<cstring>
+	<errno.h>
+	<stdlib.h>
+	<malloc.h>
+	"async_chunk_sender.h"
+
+1469888238 /home/name/projects/asio/async_chunk_sender.h
+	<boost/asio.hpp>
+	<boost/asio/buffer.hpp>
+	<boost/bind.hpp>
+	"logger.h"
+	<fstream>
+	<string>
+	<limits.h>
+	<stdlib.h>
+	<errno.h>
+	<stdexcept>
+	"config.h"
+	<cstring>
+	<errno.h>
+	<stdlib.h>
+	<malloc.h>
+	<boost/function.hpp>
+
+1469886920 source:/home/name/projects/asio/file_provider_blocking.cpp
+	"async_chunk_sender.h"
+	"config.h"
+	"logger.h"
+	<stdexcept>
+
+1469888837 source:/home/name/projects/asio/http_request_parser.cpp
+	<string>
+	<stdexcept>
+	"http_request_parser.h"
+	<fstream>
+	<sstream>
+	<iostream>
+	<unistd.h>
+	<stdlib.h>
+
+1469888877 /home/name/projects/asio/http_request_parser.h
+	<string>
+
+1469884108 /home/name/projects/asio/validation.h
+
+1469884769 /home/name/projects/asio/file_sender_blocking.h
+	<boost/asio.hpp>
+
+1469886365 source:/home/name/projects/asio/validation.cpp
+	<string>
+	"config.h"
+	<stdexcept>
+	<sys/stat.h>
+	"logger.h"
 

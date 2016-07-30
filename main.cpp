@@ -9,14 +9,14 @@
 #include "acceptor_loop.hpp"
 #include "logger.h"
 #include <fstream>
-#include "file_serving.h"
 #include "config.h"
 #include <unistd.h>
+#include "http_request_parser.h"
+#include "validation.h"
+#include "file_sender_blocking.h"
 
 using boost::asio::ip::tcp;
 using namespace boost::asio;
-
-typedef boost::shared_ptr<tcp::socket> socket_ptr;
 using namespace std;
 
 
@@ -24,57 +24,63 @@ void test_handler(shared_ptr<tcp::socket> socket) {
     cout << "handler handling!" << endl;
 }
 
-bool extract_uri(string &line, string &dest) {
-    string LEFT { "GET " };
-    string PROTOCOL { "HTTP/1.0" };
-    try {
-        if(line.compare(0, LEFT.length(), LEFT) != 0) {
-            return false;
-        }
-
-
-        int protocol_pos = line.find(PROTOCOL.data(), 0, PROTOCOL.length());
-        int args_pos = line.find('?');
-        int right = (args_pos == string::npos) ? protocol_pos : args_pos;
-        if(line.compare(protocol_pos, PROTOCOL.length(), PROTOCOL) != 0) {
-            return false;
-        }
-        dest = line.substr(LEFT.length(), right - LEFT.length());
-        // trim trailing spaces
-        size_t endpos = dest.find_last_not_of(" \t");
-        if( string::npos != endpos ) {
-            dest = dest.substr( 0, endpos+1 );
-        }
-    } catch(std::out_of_range) {
-        return false;
+void handle_write_headers(shared_ptr<tcp::socket> sock, string uri, const boost::system::error_code &error) {
+    if(error) {
+        print_log("handle_write_headers error", error);
+        return;
     }
-    return true;
+    print_log("read_handler: serving uri", uri);
+    serve_file(uri, sock);
 }
+
+void respond(shared_ptr<tcp::socket> sock, string uri, string &headers) {
+    print_log("writing headers", "");
+    boost::asio::async_write(*sock,
+                             boost::asio::buffer(headers.c_str(), headers.length()),
+                             boost::bind(handle_write_headers,
+                                         sock,
+                                         uri,
+                                         boost::asio::placeholders::error));
+}
+
+string STATUS_OK = "200 OK";
+string STATUS_NOT_FOUND = "404 NOT FOUND";
 
 void handle_read(shared_ptr<tcp::socket> socket,
                  boost::asio::streambuf *data,
                  const boost::system::error_code &error,
                  size_t bytes_transferred) {
     if(error) {
-        print_log("handle_read error", error);
+        if(boost::asio::error::eof == error)
+            return;
+        throw std::runtime_error("handle_read error");
     }
     // streambuf to string
     boost::asio::streambuf::const_buffers_type bufs = data->data();
     std::string request(boost::asio::buffers_begin(bufs), boost::asio::buffers_begin(bufs) + bytes_transferred);
+
+    print_log("read_handler request", "'" + request + "'");
     delete data;
 
     string uri;
     if(!extract_uri(request, uri)) {
         print_log("read_handler: invalid request", request);
+        return;
     }
-    print_log("read_handler request uri", "'" + uri + "'");
+    if(!validate_and_normalize_uri(uri)) {
+        print_log("read_handler: validation failed", uri);
+        return;
+    }
 
-    serve_uri(socket, uri);
+    string headers = make_headers(STATUS_OK);
+
+    respond(socket, uri, headers);
 }
 
 void client_handler(shared_ptr<tcp::socket> socket) {
     print_log("client handler", "starting");
     boost::asio::streambuf *data = new boost::asio::streambuf(512);
+
     async_read_until(*socket, *data, '\n', boost::bind(handle_read,
                                                        socket,
                                                        data,
@@ -115,11 +121,12 @@ void run_server() {
     start_acceptor_loop(io_service, endpoint, client_handler);
     //timer = new deadline_timer(io_service);
     //start_timer();
-    std::thread thread1{[&io_service](){ io_service.run(); }};
-    std::thread thread2{[&io_service](){ io_service.run(); }};
-    std::thread thread3{[&io_service](){ io_service.run(); }};
-    std::thread thread4{[&io_service](){ io_service.run(); }};
-    thread1.join();
+    io_service.run();
+    //std::thread thread1{[&io_service](){ io_service.run(); }};
+    //std::thread thread2{[&io_service](){ io_service.run(); }};
+    //std::thread thread3{[&io_service](){ io_service.run(); }};
+    //std::thread thread4{[&io_service](){ io_service.run(); }};
+    //thread1.join();
     //thread2.join();
     cout << "join!!" << endl;
     //io_service.run();
@@ -128,10 +135,7 @@ void run_server() {
 
 int main(int argc, char **argv)
 {
-    int i=fork();
-	if (i<0) exit(1); /* fork error */
-	if (i>0) exit(0); /* parent exits */
-	/* child (daemon) continues */
+
 
     try
     {

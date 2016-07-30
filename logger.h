@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-
+#define DEBUG
 
 class Logger
 {
@@ -17,7 +17,7 @@ private:
 
 template<typename T>
 void print_log(std::string tag, T obj) {
-#ifndef DEBUG
+#ifdef DEBUG
     std::cout << "[LOG] " << tag << ": " << obj << std::endl;
 #endif
 }
