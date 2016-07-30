@@ -11,9 +11,10 @@
 #include <fstream>
 #include "config.h"
 #include <unistd.h>
-#include "http_request_parser.h"
+#include "http.h"
 #include "validation.h"
 #include "file_sender_blocking.h"
+
 
 using boost::asio::ip::tcp;
 using namespace boost::asio;
@@ -43,8 +44,7 @@ void respond(shared_ptr<tcp::socket> sock, string uri, string &headers) {
                                          boost::asio::placeholders::error));
 }
 
-string STATUS_OK = "200 OK";
-string STATUS_NOT_FOUND = "404 NOT FOUND";
+
 
 void handle_read(shared_ptr<tcp::socket> socket,
                  boost::asio::streambuf *data,
@@ -63,23 +63,29 @@ void handle_read(shared_ptr<tcp::socket> socket,
     delete data;
 
     string uri;
+    bool uri_failure = false;
     if(!extract_uri(request, uri)) {
         print_log("read_handler: invalid request", request);
-        return;
+        uri_failure = true;
     }
     if(!validate_and_normalize_uri(uri)) {
         print_log("read_handler: validation failed", uri);
-        return;
+        uri_failure = true;
     }
 
-    string headers = make_headers(STATUS_OK);
+    StatusCode status_code = (uri_failure) ? NOT_FOUND : OK;
+
+    if(uri_failure)
+        uri = config::HTML_404;
+
+    string headers = make_headers(status_code, content_type_of(uri));
 
     respond(socket, uri, headers);
 }
 
 void client_handler(shared_ptr<tcp::socket> socket) {
     print_log("client handler", "starting");
-    boost::asio::streambuf *data = new boost::asio::streambuf(512);
+    boost::asio::streambuf *data = new boost::asio::streambuf(1024); // todo test
 
     async_read_until(*socket, *data, '\n', boost::bind(handle_read,
                                                        socket,
@@ -89,22 +95,6 @@ void client_handler(shared_ptr<tcp::socket> socket) {
                                                    ));
 
     print_log("client handler", "leaving");
-}
-
-deadline_timer *timer;
-
-void start_timer();
-
-void timeout(const boost::system::error_code &error) {
-    if (error)
-        return;
-    cout << "tick" << endl;
-    start_timer();
-}
-
-void start_timer() {
-    timer->expires_from_now(boost::posix_time::seconds(5));
-    timer->async_wait(boost::bind(timeout, boost::asio::placeholders::error));
 }
 
 #include <thread>
@@ -135,19 +125,31 @@ void run_server() {
 
 int main(int argc, char **argv)
 {
-
-
-    try
-    {
-
+    try {
         config::parse_args(argc, argv);
         run_server();
-
     }
-    catch (std::exception& e)
-    {
+    catch (std::exception& e) {
         std::cerr << "[ERROR] " << e.what() << std::endl;
     }
 
     return 0;
 }
+
+/*
+deadline_timer *timer;
+
+void start_timer();
+
+void timeout(const boost::system::error_code &error) {
+    if (error)
+        return;
+    cout << "tick" << endl;
+    start_timer();
+}
+
+void start_timer() {
+    timer->expires_from_now(boost::posix_time::seconds(5));
+    timer->async_wait(boost::bind(timeout, boost::asio::placeholders::error));
+}
+*/

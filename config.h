@@ -8,7 +8,7 @@ namespace config
     extern std::string DOCUMENT_ROOT;
     extern std::string HOST;
     extern int FILE_CHUNK_SIZE;
-
+    extern std::string HTML_404;
     void parse_args(int argc, char **argv);
 }
 

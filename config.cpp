@@ -12,7 +12,7 @@ namespace config
 string PORT = "8989";
 string DOCUMENT_ROOT = "/home/name";
 string HOST = "0.0.0.0";
-
+string HTML_404 = "404.html";
 int FILE_CHUNK_SIZE = 512;
 
 
