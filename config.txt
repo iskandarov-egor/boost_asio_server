@@ -1,0 +1,5 @@
+host=127.0.0.1
+port=8787
+document_root=/home/name
+html_404=404.html
+file_chunk_size=512

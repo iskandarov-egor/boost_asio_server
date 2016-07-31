@@ -84,7 +84,7 @@ void handle_read(shared_ptr<tcp::socket> socket,
 }
 
 void client_handler(shared_ptr<tcp::socket> socket) {
-    print_log("client handler", "starting");
+    print_log("client handler", "new client");
     boost::asio::streambuf *data = new boost::asio::streambuf(1024); // todo test
 
     async_read_until(*socket, *data, '\n', boost::bind(handle_read,
@@ -93,8 +93,6 @@ void client_handler(shared_ptr<tcp::socket> socket) {
                                                        boost::asio::placeholders::error,
                                                        boost::asio::placeholders::bytes_transferred
                                                    ));
-
-    print_log("client handler", "leaving");
 }
 
 #include <thread>
@@ -103,7 +101,6 @@ void run_server() {
     boost::asio::io_service io_service;
 
     tcp::resolver resolver(io_service);
-    cout << config::HOST << config::PORT << endl;
     tcp::resolver::query query(config::HOST, config::PORT);
     tcp::resolver::iterator iter = resolver.resolve(query);
 
@@ -126,7 +123,8 @@ void run_server() {
 int main(int argc, char **argv)
 {
     try {
-        config::parse_args(argc, argv);
+        config::load_config_file("config.txt");
+        cout << "starting at " << config::HOST << ':' << config::PORT << endl;
         run_server();
     }
     catch (std::exception& e) {
