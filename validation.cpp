@@ -1,5 +1,4 @@
 #include <string>
-#include "config.h"
 #include <stdexcept>
 #include <sys/stat.h>
 #include "logger.h"
@@ -19,11 +18,11 @@ static bool real_path(string full_path, string &dest) {
     return true;
 }
 
-bool validate_and_normalize_uri(string &uri) {
+bool validate_and_normalize_uri(string &uri, string &allowed_subfolder) {
     string path;
-    bool valid = real_path(config::DOCUMENT_ROOT + uri, path);
+    bool valid = real_path(uri, path);
     if(valid) {
-        valid = path.find(config::DOCUMENT_ROOT) == 0;
+        valid = path.find(allowed_subfolder) == 0;
         if(valid) {
             struct stat s;
             if( stat(path.c_str(), &s) == 0 ) {

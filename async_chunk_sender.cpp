@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdexcept>
-#include "config.h"
 #include <cstring>
 #include <errno.h>
 #include <stdlib.h>

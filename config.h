@@ -1,16 +1,13 @@
 #ifndef CONFIG_H_INCLUDED
 #define CONFIG_H_INCLUDED
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-namespace config
-{
-    extern std::string PORT;
-    extern std::string DOCUMENT_ROOT;
-    extern std::string HOST;
-    extern int FILE_CHUNK_SIZE;
-    extern std::string HTML_404;
-    void parse_args(int argc, char **argv);
-    void load_config_file(std::string filename);
-}
+using namespace std;
+
+
+unordered_map<string, string> parse_config_file(string filename,
+                                                  vector<string> *bad_lines = nullptr);
 
 #endif // CONFIG_H_INCLUDED

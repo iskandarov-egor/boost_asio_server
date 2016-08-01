@@ -1,10 +1,9 @@
 #include "async_chunk_sender.h"
-#include "config.h"
 #include "logger.h"
 #include <stdexcept>
 
-int provide(std::ifstream *fstream, char *buffer, char **buf_dest, int *buf_size_dest) {
-    int count = fstream->readsome(buffer, config::FILE_CHUNK_SIZE);
+int provide(std::ifstream *fstream, int chunk_size, char *buffer, char **buf_dest, int *buf_size_dest) {
+    int count = fstream->readsome(buffer, chunk_size);
     if(count > 0) {
         print_log("sending chunk, size", count);
         *buf_dest = buffer;
@@ -18,13 +17,13 @@ int provide(std::ifstream *fstream, char *buffer, char **buf_dest, int *buf_size
     }
 }
 
-void serve_file(string path, shared_ptr<tcp::socket> sock) {
+void serve_file(string path, shared_ptr<tcp::socket> sock, int file_chunk_size) {
     std::ifstream *fstream = new std::ifstream(path.c_str(), std::ios::in | std::ios::binary);
     fstream->exceptions ( ifstream::failbit | ifstream::badbit );
     if(*fstream) {
-        char *buffer = new char [config::FILE_CHUNK_SIZE];
+        char *buffer = new char [file_chunk_size];
         print_log("starting serving file", path);
-        start_sending_chunks(sock, boost::bind(provide, fstream, buffer, _1, _2));
+        start_sending_chunks(sock, boost::bind(provide, fstream, file_chunk_size, buffer, _1, _2));
     } else {
         throw std::runtime_error { "fstream open failed" };
     }

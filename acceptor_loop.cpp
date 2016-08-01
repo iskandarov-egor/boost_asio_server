@@ -21,7 +21,7 @@ void accept_next() {
         boost::bind(on_accept, client_socket_dest, _1));
 }
 
-void start_acceptor_loop(boost::asio::io_service &io_service, tcp::endpoint &endpoint, ClientHandler client_handler) {
+void register_acceptor_loop(boost::asio::io_service &io_service, tcp::endpoint &endpoint, ClientHandler client_handler) {
     if(acceptor != nullptr)
         throw std::runtime_error("acceptor loop called twice");
 

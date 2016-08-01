@@ -14,118 +14,103 @@
 #include "http.h"
 #include "validation.h"
 #include "file_sender_blocking.h"
-
+#include "handle_client.h"
 
 using boost::asio::ip::tcp;
 using namespace boost::asio;
 using namespace std;
 
-
-void test_handler(shared_ptr<tcp::socket> socket) {
-    cout << "handler handling!" << endl;
-}
-
-void handle_write_headers(shared_ptr<tcp::socket> sock, string uri, const boost::system::error_code &error) {
-    if(error) {
-        print_log("handle_write_headers error", error);
-        return;
-    }
-    print_log("read_handler: serving uri", uri);
-    serve_file(uri, sock);
-}
-
-void respond(shared_ptr<tcp::socket> sock, string uri, string &headers) {
-    print_log("writing headers", "");
-    boost::asio::async_write(*sock,
-                             boost::asio::buffer(headers.c_str(), headers.length()),
-                             boost::bind(handle_write_headers,
-                                         sock,
-                                         uri,
-                                         boost::asio::placeholders::error));
-}
-
-
-
-void handle_read(shared_ptr<tcp::socket> socket,
-                 boost::asio::streambuf *data,
-                 const boost::system::error_code &error,
-                 size_t bytes_transferred) {
-    if(error) {
-        if(boost::asio::error::eof == error)
-            return;
-        throw std::runtime_error("handle_read error");
-    }
-    // streambuf to string
-    boost::asio::streambuf::const_buffers_type bufs = data->data();
-    std::string request(boost::asio::buffers_begin(bufs), boost::asio::buffers_begin(bufs) + bytes_transferred);
-
-    print_log("read_handler request", "'" + request + "'");
-    delete data;
-
-    string uri;
-    bool uri_failure = false;
-    if(!extract_uri(request, uri)) {
-        print_log("read_handler: invalid request", request);
-        uri_failure = true;
-    }
-    if(!validate_and_normalize_uri(uri)) {
-        print_log("read_handler: validation failed", uri);
-        uri_failure = true;
-    }
-
-    StatusCode status_code = (uri_failure) ? NOT_FOUND : OK;
-
-    if(uri_failure)
-        uri = config::HTML_404;
-
-    string headers = make_headers(status_code, content_type_of(uri));
-
-    respond(socket, uri, headers);
-}
-
-void client_handler(shared_ptr<tcp::socket> socket) {
-    print_log("client handler", "new client");
-    boost::asio::streambuf *data = new boost::asio::streambuf(1024); // todo test
-
-    async_read_until(*socket, *data, '\n', boost::bind(handle_read,
-                                                       socket,
-                                                       data,
-                                                       boost::asio::placeholders::error,
-                                                       boost::asio::placeholders::bytes_transferred
-                                                   ));
-}
-
 #include <thread>
 
-void run_server() {
-    boost::asio::io_service io_service;
+struct ServerConfig {
+    string HOST;
+    string PORT;
+    int threads;
+    client_handler::Config handler_config;
+};
 
-    tcp::resolver resolver(io_service);
-    tcp::resolver::query query(config::HOST, config::PORT);
-    tcp::resolver::iterator iter = resolver.resolve(query);
+ServerConfig load_server_config(string filename) {
+    vector<string> bad_lines;
+    unordered_map<string, string> config_map = parse_config_file(filename, &bad_lines);
 
-    tcp::endpoint endpoint = iter->endpoint();
-    start_acceptor_loop(io_service, endpoint, client_handler);
-    //timer = new deadline_timer(io_service);
-    //start_timer();
-    io_service.run();
-    //std::thread thread1{[&io_service](){ io_service.run(); }};
-    //std::thread thread2{[&io_service](){ io_service.run(); }};
-    //std::thread thread3{[&io_service](){ io_service.run(); }};
-    //std::thread thread4{[&io_service](){ io_service.run(); }};
-    //thread1.join();
-    //thread2.join();
-    cout << "join!!" << endl;
-    //io_service.run();
+    for(auto it : bad_lines) {
+        cout << "bad line '" << it << "' in config file '" << filename << '\'' << endl;
+    }
+
+    ServerConfig config;
+    unordered_map<string, string*> string_map = {
+        {"port", &config.PORT},
+        {"document_root", &config.handler_config.DOCUMENT_ROOT},
+        {"host", &config.HOST},
+        {"html_404", &config.handler_config.HTML_404}
+    };
+    unordered_map<string, int*> int_map = {
+        {"file_chunk_size", &config.handler_config.FILE_CHUNK_SIZE},
+        {"threads", &config.threads}
+    };
+
+
+    for(auto it : string_map) {
+        try{
+            string key = it.first;
+            *(it.second) = config_map.at(key);
+            config_map.erase(key);
+        } catch (std::out_of_range) {
+            cout << it.first << " not found in config file " << '"' << filename << '"' << endl;
+        }
+    }
+
+    for(auto it : int_map) {
+        try{
+            string key = it.first;
+            *(it.second) = stoi(config_map.at(key));
+            config_map.erase(key);
+        } catch (std::out_of_range) {
+            cout << it.first << " not found in config file " << '"' << filename << '"' << endl;
+        }
+    }
+
+    for(auto it : config_map) {
+        cout << "unrecognized option '" << it.first << "' in config file '" << filename << '\'' << endl;
+    }
+
+    if(config.threads < 1) {
+        cout << "number of threads out of range, using 1" << endl;
+        config.threads = 1;
+    }
+
+    return config;
 }
 
+#include <boost/function.hpp>
+
+void _main() {
+    ServerConfig config = load_server_config("config.txt");
+    boost::asio::io_service io_service;
+
+    // endpoint_from_string
+    tcp::resolver resolver(io_service);
+    tcp::resolver::query query(config.HOST, config.PORT);
+    tcp::resolver::iterator iter = resolver.resolve(query);
+    tcp::endpoint endpoint = iter->endpoint();
+
+    // register server callbacks in io_service
+    register_acceptor_loop(io_service, endpoint,
+                           boost::bind(handle_client, _1, config.handler_config));
+
+    cout << "starting at " << config.HOST << ':' << config.PORT << endl;
+
+    thread *threads = new thread[config.threads];
+    for(int i = 0; i < config.threads; i++)
+        threads[i] = thread{[&io_service](){ io_service.run(); }};
+
+    threads[0].join();
+}
 
 int main(int argc, char **argv)
 {
     try {
-        config::load_config_file("config.txt");
-        cout << "starting at " << config::HOST << ':' << config::PORT << endl;
-        run_server();
+        _main();
     }
     catch (std::exception& e) {
         std::cerr << "[ERROR] " << e.what() << std::endl;

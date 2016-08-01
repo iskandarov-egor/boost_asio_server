@@ -30,7 +30,7 @@ string make_headers(StatusCode status_code, ContentType content_type) {
 bool extract_uri(string &line, string &dest) {
     string LEFT { "GET " };
     string protocols[] = { "HTTP/1.0", "HTTP/1.1" };
-    string PROTOCOL = protocols[1];
+    string PROTOCOL = protocols[0]; // todo
     static_assert(sizeof(protocols) > 0, "no http protocols specified");
 
     try {

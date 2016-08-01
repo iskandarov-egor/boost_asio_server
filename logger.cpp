@@ -1,10 +1,4 @@
-#ifndef LOGGER_H
-#define LOGGER_H
-
-#include <string>
-#include <iostream>
-
-#define DEBUG2
+#include "logger.h"
 
 template<typename T>
 void print_log(std::string tag, T obj) {
@@ -12,7 +6,3 @@ void print_log(std::string tag, T obj) {
     std::cout << "[LOG] " << tag << ": " << obj << std::endl;
 #endif
 }
-
-
-
-#endif // LOGGER_H
